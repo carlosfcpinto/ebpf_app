@@ -23,7 +23,7 @@ jobs:
           make git clang llvm pkg-config build-essential
 
       - name: install libcyaml
-        run: make install
+        run: make cyaml
 
       - name: build package
         run:  make build
