@@ -11,4 +11,4 @@ install:
         make clang llvm
 
 cyaml:
-	cd libcyaml && make
+	cd libcyaml && make install
