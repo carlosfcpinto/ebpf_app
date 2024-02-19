@@ -1,8 +1,8 @@
 #include "eBPF_ls.h"
 #include "eBPF_ls.skel.h"
 // #include "vmlinux.h"
+#include "../libcyaml/cyaml.h"
 #include <bpf/libbpf.h>
-#include <cyaml/cyaml.h>
 #include <dirent.h>
 #include <errno.h>
 #include <pwd.h>
