@@ -23,7 +23,7 @@ jobs:
           make git clang llvm pkg-config build-essential
 
       - name: install libcyaml
-        run: cd libcyaml-main && sudo make install
+        run: git clone https://github.com/tlsa/libcyaml.git && cd libcyaml && sudo make install
 
       - name: build package
         run:  make build
