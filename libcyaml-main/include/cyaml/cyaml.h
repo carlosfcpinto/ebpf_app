@@ -23,7 +23,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#include "private.h"
+#include "cyaml/private.h"
 
 /**
  * CYAML library version string.
