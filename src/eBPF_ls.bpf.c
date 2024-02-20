@@ -5,7 +5,7 @@
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
 
-char message[12] = "Hello World";
+char message[12] = "Hello World ";
 
 #define EFAULT 14 /* Bad address */
 
