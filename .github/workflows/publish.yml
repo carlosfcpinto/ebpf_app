@@ -11,7 +11,10 @@ jobs:
     strategy:
       matrix:
         target: [ x86_64-unknown-linux-gnu ]
-
+    
+    permissions:
+      contents: write
+      
     steps:
     - uses: actions/checkout@v3
       with:
@@ -55,6 +58,9 @@ jobs:
         libelf1 libelf-dev zlib1g-dev libclang-13-dev \
         make git clang llvm pkg-config build-essential
 
+    - name: install cyaml
+      run: cd libcyaml-main && sudo make install
+
     - name: build package
       run:  make build
 
@@ -63,7 +69,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
           files: |
-            src/bootstrap
+            src/eBPF_ls
           prerelease: false
           tag_name: ${{ steps.set_version.outputs.result }}
           generate_release_notes: true
