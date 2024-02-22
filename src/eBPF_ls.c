@@ -1,5 +1,6 @@
 #include "eBPF_ls.h"
-#include "eBPF_ls.skel.h"
+// #include "eBPF_ls.skel.h"
+#include ".output/eBPF_ls.skel.h"
 // #include "vmlinux.h"
 #include <cyaml/cyaml.h>
 // #include "../libcyaml-main/include/cyaml/cyaml.h"
@@ -8,6 +9,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -151,14 +153,15 @@ int main(int argc, char *argv[]) {
 
   struct pairing x;
   // unsigned char *str = "/home/test2/this");
-  char str[] = "/home/test2/this";
-  // char *str_aux = &str[0];
-  strcpy(str, x.path);
+  char str[100] = "/home/test2/this";
+  // bpf_strtol to convert string into long, to facilitate accessing from the
+  // hash map char *str_aux = &str[0];
+  strcpy(x.path, str);
   x.uid = 1006;
 
-  int z = 12345;
-  bpf_map__update_elem(skel->maps.directories, &x, sizeof(struct pairing), &z,
-                       sizeof(z), 0);
+  // int z = 12345;
+  bpf_map__update_elem(skel->maps.directories, &x.path, sizeof(x.path), &x.uid,
+                       sizeof(x.uid), 0);
 
   err = eBPF_ls_bpf__attach(skel);
   if (err) {

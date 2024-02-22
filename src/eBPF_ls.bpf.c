@@ -140,7 +140,7 @@ struct {
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 10240);
-  __type(key, struct pairing);
+  __type(key, char *);
   __type(value, u32);
 } directories SEC(".maps");
 
@@ -156,17 +156,15 @@ SEC("lsm/path_chmod")
 int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   // struct data_t data = {};
   struct msg_t *p;
-  char *y;
-  u32 *aux;
+  u32 *directory_flag;
   struct pairing x;
   int uid;
+  char *dir;
 
   // data.pid = bpf_get_current_pid_tgid() >> 32;
   uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-  // bpf_printk("what is going on 1?");
-  // ring buffer should be initialized in user side to contain the name of files
-  // to be denied access to
-  // file is present in path -> dentry -> d_iname
+  bpf_printk("this user in the first check %d ", uid);
+
   /* bpf_get_current_comm(&data.command, sizeof(data.command)); */
   /* bpf_probe_read_user_str(&data.path, sizeof(data.path), path->dentry); */
   struct buffer *string_buf = get_buffer();
@@ -179,30 +177,37 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   // struct path *path_aux = __builtin_preserve_access_index(&file->f_path);
   u_char *file_path = NULL;
   get_path_str_from_path(&file_path, path, string_buf);
-  bpf_core_read(&y, sizeof(y), file_path);
-  bpf_core_read_str(x.path, sizeof(x.path), p);
+  // bpf_core_read(&y, sizeof(y), file_path);
+  // int len = bpf_core_read_str(dir, sizeof(dir) * 100, file_path);
   // long len = bpf_core_read_str(x.path, PATH_MAX, file_path);
   x.uid = uid;
-  // if (len < 0)
+  // if (len < 0) {
+  //   bpf_printk("unable to copy string");
   //   return 0;
+  // }
 
-  bpf_printk("x.id? %d", x.uid);
-  bpf_printk("x.path? %s ", x.path);
+  bpf_printk("x.uid? %d", x.uid);
+  bpf_printk("x.path? \"%s\"", file_path);
+  bpf_printk("size of dir: %d ", sizeof(file_path));
 
-  p = bpf_map_lookup_elem(&my_config, &uid);
-  aux = bpf_map_lookup_elem(&directories, &x);
+  p = bpf_map_lookup_elem(&my_config, &x.uid);
+  directory_flag = bpf_map_lookup_elem(&directories, &file_path);
   if (p != 0) {
     bpf_printk("This user %d", uid);
-    bpf_printk("Chmod allowed to %s", x.path);
+    bpf_printk("Chmod allowed to %s", file_path);
     return 0;
   } else {
-    if (aux != 0) {
+    if (directory_flag != 0) {
+      if (*directory_flag == uid) {
+        bpf_printk("user has access to file");
+        return 0;
+      }
       bpf_printk("Aux not empty %d\n ", uid);
-      bpf_printk("Chmod allowed to %s", x.path);
+      bpf_printk("Chmod allowed to %s", file_path);
       return 0;
     } else {
       bpf_printk("aux is empty");
-      bpf_printk("Chmod not allowed to %s", x.path);
+      bpf_printk("Chmod not allowed to %s", file_path);
       return -EPERM;
     }
   }
