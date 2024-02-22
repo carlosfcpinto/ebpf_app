@@ -149,6 +149,17 @@ int main(int argc, char *argv[]) {
                          &msg, sizeof(msg), 0);
   }
 
+  struct pairing x;
+  // unsigned char *str = "/home/test2/this");
+  char str[] = "/home/test2/this";
+  // char *str_aux = &str[0];
+  strcpy(str, x.path);
+  x.uid = 1006;
+
+  int z = 12345;
+  bpf_map__update_elem(skel->maps.directories, &x, sizeof(struct pairing), &z,
+                       sizeof(z), 0);
+
   err = eBPF_ls_bpf__attach(skel);
   if (err) {
     fprintf(stderr, "Failed to attach BPF skeleton: %d\n", err);

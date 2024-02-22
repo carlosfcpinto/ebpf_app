@@ -1,9 +1,11 @@
 #include "eBPF_ls.h"
-#include "vmlinux.h"
+#include "../vmlinux/x86/vmlinux.h"
+// #include "vmlinux.h"
 #include <asm-generic/errno-base.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
+#include <linux/limits.h>
 
 char message[12] = "Hello World ";
 
@@ -129,11 +131,18 @@ struct {
   __uint(key_size, sizeof(u32));
   __uint(value_size, sizeof(u32));
 } output SEC(".maps");
+//
+// // map uid to a struct with filenames that user cannot change
+// struct user_msg_t {
+//   char message[12];
+// };
 
-// map uid to a struct with filenames that user cannot change
-struct user_msg_t {
-  char message[12];
-};
+struct {
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __uint(max_entries, 10240);
+  __type(key, struct pairing);
+  __type(value, u32);
+} directories SEC(".maps");
 
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
@@ -145,23 +154,24 @@ struct {
 // path_chmod or file_permission
 SEC("lsm/path_chmod")
 int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
-  struct data_t data = {};
+  // struct data_t data = {};
   struct msg_t *p;
-  u64 uid;
+  char *y;
+  u32 *aux;
+  struct pairing x;
+  int uid;
 
-  data.pid = bpf_get_current_pid_tgid() >> 32;
+  // data.pid = bpf_get_current_pid_tgid() >> 32;
   uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-  data.uid = uid;
-
+  // bpf_printk("what is going on 1?");
   // ring buffer should be initialized in user side to contain the name of files
   // to be denied access to
   // file is present in path -> dentry -> d_iname
-
   /* bpf_get_current_comm(&data.command, sizeof(data.command)); */
   /* bpf_probe_read_user_str(&data.path, sizeof(data.path), path->dentry); */
-
   struct buffer *string_buf = get_buffer();
   if (string_buf == NULL) {
+    bpf_printk("string_buf is null");
     return 0;
   }
   // struct task_struct *task = (struct task_struct *)bpf_get_current_task();
@@ -169,57 +179,68 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   // struct path *path_aux = __builtin_preserve_access_index(&file->f_path);
   u_char *file_path = NULL;
   get_path_str_from_path(&file_path, path, string_buf);
-  // if (path->dentry->d_op && path->dentry->d_op->d_dname &&
-  //     (path->dentry != path->mnt->mnt_root))
-  //   buf = path->dentry->d_op->d_dname(path->dentry, buf, 100);
-  //
-  // read config from map, see if user has restrictions
-  p = bpf_map_lookup_elem(&my_config, &data.uid);
+  bpf_core_read(&y, sizeof(y), file_path);
+  bpf_core_read_str(x.path, sizeof(x.path), p);
+  // long len = bpf_core_read_str(x.path, PATH_MAX, file_path);
+  x.uid = uid;
+  // if (len < 0)
+  //   return 0;
+
+  bpf_printk("x.id? %d", x.uid);
+  bpf_printk("x.path? %s ", x.path);
+
+  p = bpf_map_lookup_elem(&my_config, &uid);
+  aux = bpf_map_lookup_elem(&directories, &x);
   if (p != 0) {
-    bpf_printk("This user %d\n", data.uid);
-    bpf_printk("Chmod allowed to %s", path->dentry->d_iname);
+    bpf_printk("This user %d", uid);
+    bpf_printk("Chmod allowed to %s", x.path);
     return 0;
   } else {
-    bpf_printk("This user %d\n", data.uid);
-    bpf_printk("Access denied to %s", file_path);
-
-    return -EPERM;
+    if (aux != 0) {
+      bpf_printk("Aux not empty %d\n ", uid);
+      bpf_printk("Chmod allowed to %s", x.path);
+      return 0;
+    } else {
+      bpf_printk("aux is empty");
+      bpf_printk("Chmod not allowed to %s", x.path);
+      return -EPERM;
+    }
   }
 
-  /*   bpf_perf_event_output(ctx, &output, BPF_F_CURRENT_CPU, &data,
-   * sizeof(data)); */
+  bpf_printk("what is going on?");
   return 0;
 }
-
-SEC("lsm/task_fix_setuid")
-int BPF_PROG(setuid, struct cred *new, struct cred *old, int flags) {
-
-  struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-  struct file *file = BPF_CORE_READ(task, mm, exe_file);
-  struct path *path = __builtin_preserve_access_index(&file->f_path);
-
-  struct buffer *string_buf = get_buffer();
-  if (string_buf == NULL) {
-    return 0;
-  }
-  u_char *file_path = NULL;
-  get_path_str_from_path(&file_path, path, string_buf);
-  bpf_printk("sudo access in %s ", file_path);
-  bpf_printk("flags: %d ", flags);
-
-  char comm[16];
-  bpf_get_current_comm(&comm, sizeof(comm));
-  bpf_printk("/n/n/n This command %s ", comm);
-  // char new_string[15];
-  // bpf_probe_read_str(&new_string, sizeof(new_string), file_path);
-  // if (/* (new->uid.val == 1000 && old->suid.val == 1006) ||*/
-  //   (new->uid.val == 1000 && old->euid.val == 0 && old->suid.val != 1000)/*
-  //   &&
-  //     __builtin_memcmp("su\0", comm, 2 * sizeof(char)) == 0 */)
-  if (new->uid.val == 1000 && old->euid.val == 0 && old->uid.val != 1000)
-    return -EPERM;
-  return 0;
-}
+char LICENSE[] SEC("license") = "Dual BSD/GPL";
+// SEC("lsm/task_fix_setuid")
+// int BPF_PROG(setuid, struct cred *new, struct cred *old, int flags) {
+//
+//   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+//   struct file *file = BPF_CORE_READ(task, mm, exe_file);
+//   struct path *path = __builtin_preserve_access_index(&file->f_path);
+//
+//   struct buffer *string_buf = get_buffer();
+//   if (string_buf == NULL) {
+//     return 0;
+//   }
+//   u_char *file_path = NULL;
+//   get_path_str_from_path(&file_path, path, string_buf);
+//   bpf_printk("sudo access in %s ", file_path);
+//   bpf_printk("flags: %d ", flags);
+//
+//   char comm[16];
+//   bpf_get_current_comm(&comm, sizeof(comm));
+//   bpf_printk("/n/n/n This command %s ", comm);
+//   // char new_string[15];
+//   // bpf_probe_read_str(&new_string, sizeof(new_string), file_path);
+//   // if (/* (new->uid.val == 1000 && old->suid.val == 1006) ||*/
+//   //   (new->uid.val == 1000 && old->euid.val == 0 && old->suid.val !=
+//   1000)/*
+//   //   &&
+//   //     __builtin_memcmp("su\0", comm, 2 * sizeof(char)) == 0 */)
+//   if (new->uid.val == 1000 && old->euid.val == 0 && old->uid.val != 1000)
+//     return -EPERM;
+//   return 0;
+// }
 
 // SEC("ksyscall/execve")
 // int BPF_PROG(exec, const char *pathname, char *const _Nullable argv[],
@@ -240,4 +261,3 @@ int BPF_PROG(setuid, struct cred *new, struct cred *old, int flags) {
 //   }
 //   return 0;
 // }
-char LICENSE[] SEC("license") = "Dual BSD/GPL";
