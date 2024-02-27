@@ -12,7 +12,7 @@ struct data_t {
 struct pairing {
   int uid;
   // char path[PATH_MAX];
-  char path[100];
+  unsigned char path[100];
 };
 
 struct msg_t {

@@ -2,6 +2,8 @@
 
 Trouble passing strings from kernel to user space, maybe hash map should be of type string -> user, where string is the destination and we can flag directories so that only one user can modify them, unless the user making the call is whitelisted to be able to make it always.
 
+Can i map users to directories instead of directories to users? Seems like eBPF maps don't handle strings correctly, not being able to match on it in the expected manner.
+UPDATE: Reading values correctly, assuming the max path provided is of size 100.
 
 # Requirements
 

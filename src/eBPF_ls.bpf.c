@@ -140,7 +140,7 @@ struct {
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 10240);
-  __type(key, char *);
+  __type(key, u8[100]);
   __type(value, u32);
 } directories SEC(".maps");
 
@@ -159,7 +159,6 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   u32 *directory_flag;
   struct pairing x;
   int uid;
-  char *dir;
 
   // data.pid = bpf_get_current_pid_tgid() >> 32;
   uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
@@ -175,8 +174,15 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   // struct task_struct *task = (struct task_struct *)bpf_get_current_task();
   // struct file *file = BPF_CORE_READ(task, mm, exe_file);
   // struct path *path_aux = __builtin_preserve_access_index(&file->f_path);
-  u_char *file_path = NULL;
+  u8 *file_path;
   get_path_str_from_path(&file_path, path, string_buf);
+  // int i = 0;
+  // for (i = 0; i < 100; i++) {
+  //   if ((file_path + i) != 0)
+  //     x.path[i] = *(file_path + i);
+  // }
+  // dir = *file_path;
+
   // bpf_core_read(&y, sizeof(y), file_path);
   // int len = bpf_core_read_str(dir, sizeof(dir) * 100, file_path);
   // long len = bpf_core_read_str(x.path, PATH_MAX, file_path);
@@ -186,12 +192,14 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   //   return 0;
   // }
 
+  bpf_core_read(x.path, sizeof(x.path), file_path);
   bpf_printk("x.uid? %d", x.uid);
-  bpf_printk("x.path? \"%s\"", file_path);
+  bpf_printk("buffer? %s", string_buf->data);
+  bpf_printk("x.path? \"%s\"", x.path);
   bpf_printk("size of dir: %d ", sizeof(file_path));
 
   p = bpf_map_lookup_elem(&my_config, &x.uid);
-  directory_flag = bpf_map_lookup_elem(&directories, &file_path);
+  directory_flag = bpf_map_lookup_elem(&directories, &x.path);
   if (p != 0) {
     bpf_printk("This user %d", uid);
     bpf_printk("Chmod allowed to %s", file_path);
@@ -207,7 +215,7 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
       return 0;
     } else {
       bpf_printk("aux is empty");
-      bpf_printk("Chmod not allowed to %s", file_path);
+      bpf_printk("Chmod not allowed to %s %d", file_path, uid);
       return -EPERM;
     }
   }

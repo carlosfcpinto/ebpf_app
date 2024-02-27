@@ -153,14 +153,14 @@ int main(int argc, char *argv[]) {
 
   struct pairing x;
   // unsigned char *str = "/home/test2/this");
-  char str[100] = "/home/test2/this";
+  unsigned char str[100] = "/home/test2/this\0";
   // bpf_strtol to convert string into long, to facilitate accessing from the
   // hash map char *str_aux = &str[0];
-  strcpy(x.path, str);
+  // strcpy(x.path, str);
   x.uid = 1006;
 
   // int z = 12345;
-  bpf_map__update_elem(skel->maps.directories, &x.path, sizeof(x.path), &x.uid,
+  bpf_map__update_elem(skel->maps.directories, &str, sizeof(str), &x.uid,
                        sizeof(x.uid), 0);
 
   err = eBPF_ls_bpf__attach(skel);
