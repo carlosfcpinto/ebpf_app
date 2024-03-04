@@ -163,6 +163,19 @@ int main(int argc, char *argv[]) {
   bpf_map__update_elem(skel->maps.directories, &str, sizeof(str), &x.uid,
                        sizeof(x.uid), 0);
 
+  struct pairing z;
+  // unsigned char *str = "/home/test2/this");
+  unsigned char str1[100] =
+      "/home/carlosfcpinto/Documents/thesis/eBPF_app/src/testfile2\0";
+  // bpf_strtol to convert string into long, to facilitate accessing from the
+  // hash map char *str_aux = &str[0];
+  // strcpy(x.path, str);
+  z.uid = 1006;
+
+  // int z = 12345;
+  bpf_map__update_elem(skel->maps.directories, &str1, sizeof(str1), &z.uid,
+                       sizeof(z.uid), 0);
+
   err = eBPF_ls_bpf__attach(skel);
   if (err) {
     fprintf(stderr, "Failed to attach BPF skeleton: %d\n", err);

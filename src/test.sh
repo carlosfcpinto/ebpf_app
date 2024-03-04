@@ -1,20 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bats
 
-# Create a test file
-touch testfile
 
-# Set the file ownership to user with ID 1006
-chown 1006 testfile
+@test "eBPF block" {
+    touch testfile
 
-# Attempt to change the file mode as the user with ID 1006
-su -c "chmod 777 testfile" -s /bin/bash test2
+    # Set the file ownership to user with ID 1006
+    chown 1006 testfile
 
-# Check the exit status of the previous command
-if [ $? -ne 0 ]; then
-    echo "Test passed: User with ID 1006 cannot call chmod on the file"
-else
-    echo "Test failed: User with ID 1006 can call chmod on the file"
-fi
+    # Attempt to change the file mode as the user with ID 1006
+    run su -c "chmod 777 testfile" -s /bin/bash test2
 
-# Clean up the test file
-rm testfile
+    rm testfile
+    [ "$status" -ne 0 ]
+}
+
+@test "eBPF allows" {
+    touch testfile2
+
+    #testfile2 is whitelisted for user 1006 in ebpf program, so the chmod system call should be allowed
+    chown 1006 testfile2
+    run su -c "chmod 777 testfile2" -s /bin/bash test2
+
+    rm testfile2
+    [ "$status" -eq 0 ]
+}

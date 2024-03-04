@@ -42,7 +42,6 @@ statfunc struct buffer *get_buffer() {
 
 statfunc long get_path_str_from_path(u_char **path_str, const struct path *path,
                                      struct buffer *out_buf) {
-
   long ret;
   struct dentry *dentry, *dentry_parent, *dentry_mnt;
   struct vfsmount *vfsmnt;
@@ -131,11 +130,6 @@ struct {
   __uint(key_size, sizeof(u32));
   __uint(value_size, sizeof(u32));
 } output SEC(".maps");
-//
-// // map uid to a struct with filenames that user cannot change
-// struct user_msg_t {
-//   char message[12];
-// };
 
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
@@ -176,12 +170,6 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   // struct path *path_aux = __builtin_preserve_access_index(&file->f_path);
   u8 *file_path;
   get_path_str_from_path(&file_path, path, string_buf);
-  // int i = 0;
-  // for (i = 0; i < 100; i++) {
-  //   if ((file_path + i) != 0)
-  //     x.path[i] = *(file_path + i);
-  // }
-  // dir = *file_path;
 
   // bpf_core_read(&y, sizeof(y), file_path);
   // int len = bpf_core_read_str(dir, sizeof(dir) * 100, file_path);

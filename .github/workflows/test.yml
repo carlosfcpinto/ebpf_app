@@ -1,0 +1,24 @@
+name: Testing application
+
+on:
+  push:
+    branches: "master"
+
+
+jobs:
+   my_test:
+     runs-on: ubuntu-latest
+     name: Install Bats and bats libs
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v2
+       - name: Setup Bats and bats libs
+         uses: bats-core/bats-action@1.5.4
+       - name: Dependencies
+         run: |
+          sudo apt-get install -y --no-install-recommends \
+          libelf1 libelf-dev zlib1g-dev libclang-13-dev \
+          make git clang llvm pkg-config build-essential
+       - name: Testing
+         run: |
+           cd src && sudo bats test.sh
