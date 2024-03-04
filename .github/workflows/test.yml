@@ -8,23 +8,36 @@ on:
 jobs:
    my_test:
      runs-on: ubuntu-latest
-     name: Test
+     if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[ci skip]')"
+     strategy:
+       matrix:
+         target: [ x86_64-unknown-linux-gnu ]
+    
+     permissions:
+       contents: write
+      
      steps:
-       - name: Checkout
-         uses: actions/checkout@v2
-       - name: Setup Bats and bats libs
-         run: |
-           git clone https://github.com/bats-core/bats-core.git &&
-           cd bats-core &&
-           sudo ./install.sh /usr/local
-       - name: Dependencies
-         run: |
-          sudo apt-get install -y --no-install-recommends \
-          libelf1 libelf-dev zlib1g-dev libclang-13-dev \
-          make git clang llvm pkg-config build-essential
-       - name: Testing
-         run: |
-           cd src && sudo make && ./eBPF_ls config.yaml &
-       - name: Testing
-         run: |
-           cd src && sudo bats test.sh
+     - uses: actions/checkout@v3
+       with:
+         submodules: 'recursive'
+
+         
+     - name: Checkout
+       uses: actions/checkout@v2
+     - name: Setup Bats and bats libs
+       run: |
+         git clone https://github.com/bats-core/bats-core.git &&
+         cd bats-core &&
+         sudo ./install.sh /usr/local &&
+         cd ..
+     - name: Dependencies
+       run: |
+        sudo apt-get install -y --no-install-recommends \
+        libelf1 libelf-dev zlib1g-dev libclang-13-dev \
+        make git clang llvm pkg-config build-essential
+     - name: Testing
+       run: |
+         make build && sudo ./src/eBPF_ls config.yaml &
+     - name: Testing
+       run: |
+         cd src && sudo bats test.sh
