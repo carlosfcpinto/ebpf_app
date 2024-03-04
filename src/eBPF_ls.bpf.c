@@ -1,6 +1,6 @@
 #include "eBPF_ls.h"
-#include "../vmlinux/x86/vmlinux.h"
-// #include "vmlinux.h"
+// #include "../vmlinux/x86/vmlinux.h"
+#include "vmlinux.h"
 #include <asm-generic/errno-base.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
