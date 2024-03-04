@@ -8,7 +8,6 @@ on:
 jobs:
    my_test:
      runs-on: ubuntu-latest
-     if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[ci skip]')"
      strategy:
        matrix:
          target: [ x86_64-unknown-linux-gnu ]
@@ -35,9 +34,14 @@ jobs:
         sudo apt-get install -y --no-install-recommends \
         libelf1 libelf-dev zlib1g-dev libclang-13-dev \
         make git clang llvm pkg-config build-essential
-     - name: Testing
+     - name: install libcyaml
+       run: git clone https://github.com/tlsa/libcyaml.git && cd libcyaml && sudo make install        
+     - name: Build
        run: |
-         make build && sudo ./src/eBPF_ls config.yaml &
+         make build
+     - name: Run
+       run: |
+         sudo ./src/eBPF_ls src/config.yaml &
      - name: Testing
        run: |
          cd src && sudo bats test.sh
