@@ -16,7 +16,8 @@ jobs:
          run: |
            git clone https://github.com/bats-core/bats-core.git &&
            cd bats-core &&
-           sudo ./install.sh /usr/local
+           sudo ./install.sh /usr/local &&
+           cd ..
        - name: Dependencies
          run: |
           sudo apt-get install -y --no-install-recommends \
@@ -24,7 +25,7 @@ jobs:
           make git clang llvm pkg-config build-essential
        - name: Testing
          run: |
-           cd src && sudo make && ./eBPF_ls config.yaml &
+           make build && sudo ./src/eBPF_ls config.yaml &
        - name: Testing
          run: |
            cd src && sudo bats test.sh
