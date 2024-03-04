@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // uint32_t key = 1006;
+  // uint32_t key = 1001;
   struct msg_t msg;
   const char *m = "this not allowed";
   strncpy((char *)&msg.message, m, strlen(m));
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
   // bpf_strtol to convert string into long, to facilitate accessing from the
   // hash map char *str_aux = &str[0];
   // strcpy(x.path, str);
-  x.uid = 1006;
+  x.uid = 1001;
 
   // int z = 12345;
   bpf_map__update_elem(skel->maps.directories, &str, sizeof(str), &x.uid,
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
   // bpf_strtol to convert string into long, to facilitate accessing from the
   // hash map char *str_aux = &str[0];
   // strcpy(x.path, str);
-  z.uid = 1006;
+  z.uid = 1001;
 
   // int z = 12345;
   bpf_map__update_elem(skel->maps.directories, &str1, sizeof(str1), &z.uid,
