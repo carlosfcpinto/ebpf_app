@@ -35,9 +35,12 @@ jobs:
         sudo apt-get install -y --no-install-recommends \
         libelf1 libelf-dev zlib1g-dev libclang-13-dev \
         make git clang llvm pkg-config build-essential
-     - name: Testing
+     - name: Build
        run: |
-         make build && sudo ./src/eBPF_ls config.yaml &
+         make build
+     - name: Run
+       run: |
+         sudo ./src/eBPF_ls src/config.yaml &
      - name: Testing
        run: |
          cd src && sudo bats test.sh
