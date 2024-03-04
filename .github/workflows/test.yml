@@ -24,4 +24,7 @@ jobs:
           make git clang llvm pkg-config build-essential
        - name: Testing
          run: |
+           cd src && sudo make && ./eBPF_ls config.yaml &
+       - name: Testing
+         run: |
            cd src && sudo bats test.sh
