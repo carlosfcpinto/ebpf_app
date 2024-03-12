@@ -1,10 +1,9 @@
 # Not compiling ATM
 
-Trouble passing strings from kernel to user space, maybe hash map should be of type string -> user, where string is the destination and we can flag directories so that only one user can modify them, unless the user making the call is whitelisted to be able to make it always.
+Hook to the bpf_lsm_file_open security hookpoint, check the full path from struct path f_path inside struct file, read from an ebpf map to see if that file should be tracked or not, and allow or deny access based on it. The pidhid is useful to hide that the program is running to most users, should also be extended to hide normal files, not just numerical ones. 
+These 3 programs in tandem should work correctly to prevent data exfiltration, should be finished by march 14th.
 
-Can I map users to directories instead of directories to users? Seems like eBPF maps don't handle strings correctly, not being able to match on it in the expected manner.
-UPDATE: Reading values correctly, assuming the max path provided is of size 100.
-
+<!-- TODO: third bpf lsm program/ pidhide to hide normal folders/ program to prevent sudo calls/ bpf map freeze, to prevent updating maps while runnig the program, the configuratino should be static or allowed only to one user/ identify potential vulnerabilities. -->
 # Requirements
 
 Allow or deny the chmod system call, based on both the user and the directory where is being ran. We must assure that if a user is whitelisted then he will always be able to make the call. A directory can map a specific user that is not white listed to be able to make the chmod call inside it.

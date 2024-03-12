@@ -20,7 +20,7 @@ INCLUDES := -I$(OUTPUT) -I../libbpf/include/uapi -I$(dir $(VMLINUX))
 CFLAGS := -g -Wall
 ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 
-APPS = pidhide
+APPS = pidhide file_open
 
 # Get Clang's default includes on this system. We'll explicitly add these dirs
 # to the includes list when compiling with `-target bpf` because otherwise some
@@ -56,6 +56,8 @@ $(call allow-override,LD,$(CROSS_COMPILE)ld)
 
 .PHONY: all
 all: $(APPS)
+pidhide: pidhide
+file_open: file_open
 
 .PHONY: clean
 clean:

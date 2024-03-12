@@ -14,11 +14,17 @@
 #define PROG_01 1
 #define PROG_02 2
 
-struct event
-{
-    int pid;
-    char comm[TASK_COMM_LEN];
-    bool success;
+struct data_t {
+  int pid;
+  int uid;
+  char command[16];
+  // char message[12];
+  char path[100];
+};
+struct event {
+  int pid;
+  char comm[TASK_COMM_LEN];
+  bool success;
 };
 
 #endif // BAD_BPF_COMMON_H
