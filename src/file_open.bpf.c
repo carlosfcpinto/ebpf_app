@@ -206,8 +206,8 @@ int BPF_PROG(file_open, struct file *file) {
       bpf_printk("File_open allowed to %s %d", file_path, uid);
       return 0;
     } else {
-      /* bpf_printk("aux is empty");
-      bpf_printk("file_open allowed to %s %d", file_path, uid); */
+      bpf_printk("aux is empty");
+      bpf_printk("file_open allowed to %s %d", file_path, uid);
       return 0;
     }
   }
