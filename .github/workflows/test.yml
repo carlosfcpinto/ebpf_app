@@ -29,6 +29,8 @@ jobs:
          cd bats-core &&
          sudo ./install.sh /usr/local &&
          cd ..
+     - name: sanity
+       run: echo $(id --user)
      - name: Dependencies
        run: |
         sudo apt-get install -y --no-install-recommends \
