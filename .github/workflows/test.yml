@@ -39,9 +39,9 @@ jobs:
      - name: Build
        run: |
          make build
-     - name: Run
+     - name: Run and Test
        run: |
-         LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig && sudo ./src/eBPF_ls src/config.yaml &
+         LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig && sudo ./src/eBPF_ls src/config.yaml & ; cd src && sudo bats test.sh
      - name: Testing
        run: |
          cd src && sudo bats test.sh
