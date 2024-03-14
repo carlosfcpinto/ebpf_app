@@ -35,13 +35,19 @@ jobs:
         libelf1 libelf-dev zlib1g-dev libclang-13-dev \
         make git clang llvm pkg-config build-essential libyaml-dev lsb
      - name: install libcyaml
-       run: git clone https://github.com/tlsa/libcyaml.git && cd libcyaml && sudo make install        
-     - name: Build
-       run: |
-         make build
-     - name: Run and Test
-       run: |
-         LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig && sudo ./src/eBPF_ls src/config.yaml
-     - name: Testing
-       run: |
-         cd src && sudo bats test.sh
+       run: git clone https://github.com/tlsa/libcyaml.git && cd libcyaml && sudo make install && LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig
+     - name: Background Server
+       uses: BerniWittmann/background-server-action@v1.1.1
+       with:
+         command: sudo bats src/test.sh
+         start: sudo ./src/eBPF_ls src/config.yaml
+         build: make build
+#     - name: Build
+ #      run: |
+  #       make build
+   #  - name: Run and Test
+    #   run: |
+     #    LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig && sudo ./src/eBPF_ls src/config.yaml
+#     - name: Testing
+#      run: |
+#       cd src && sudo bats test.sh
