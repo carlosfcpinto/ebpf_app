@@ -1,0 +1,20 @@
+/home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/common.o: \
+ common.c \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/linux/filter.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/uapi/linux/bpf.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/uapi/linux/bpf_common.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/bpf.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/libbpf_common.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/libbpf_version.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/libbpf_legacy.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/hashmap.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/libbpf.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/src/.output/bpftool/bootstrap/libbpf/include/bpf/btf.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/uapi/linux/btf.h \
+ main.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/linux/compiler.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/linux/compiler_types.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/linux/compiler-gcc.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/linux/kernel.h \
+ /home/carlosfcpinto/Documents/thesis/ebpf_app/bpftool/include/linux/build_bug.h \
+ json_writer.h

@@ -195,7 +195,7 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   } else {
     if (directory_flag != 0) {
       if (*directory_flag == uid) {
-        bpf_printk("user has access to file");
+        bpf_printk("user %d has access to file", *directory_flag);
         return 0;
       }
       bpf_printk("Aux not empty %d\n ", uid);
