@@ -209,7 +209,7 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   }
 
   bpf_printk("what is going on?");
-  return 0;
+  return -EPERM;
 }
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 // SEC("lsm/task_fix_setuid")
