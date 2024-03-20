@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <yaml.h>
 
 // Convert UID from into to string with username
 char *getUser(int uid) {
@@ -21,12 +22,22 @@ char *getUser(int uid) {
   pws = getpwuid(uid);
   return pws->pw_name;
 }
-struct numbers {
-  char *name;
-  uint32_t *data;
-  unsigned data_count;
+
+// struct for storing users to be whitelisted for all calls to chmod
+struct uid_struct {
+  int uid;
+  char **directory;
+  unsigned directory_count;
 };
 
+// // struct for storing directories to be monitored, being that they are
+// // blacklisted by default
+// struct directories {
+//   const char *name;
+//   unsigned char path[100];
+//   struct uid_struct *uids;
+// };
+//
 /******************************************************************************
  * CYAML schema to tell libcyaml about both expected YAML and data structure.
  *
@@ -34,21 +45,22 @@ struct numbers {
  ******************************************************************************/
 
 /* CYAML value schema for entries of the data sequence. */
-static const cyaml_schema_value_t data_entry = {
-    CYAML_VALUE_INT(CYAML_FLAG_DEFAULT, int),
-};
+static const cyaml_schema_value_t string_ptr_schema = {
+    CYAML_VALUE_STRING(CYAML_FLAG_POINTER, char, 0, CYAML_UNLIMITED)};
 
 /* CYAML mapping schema fields array for the top level mapping. */
 static const cyaml_schema_field_t top_mapping_schema[] = {
-    CYAML_FIELD_STRING_PTR("name", CYAML_FLAG_POINTER, struct numbers, name, 0,
-                           CYAML_UNLIMITED),
-    CYAML_FIELD_SEQUENCE("data", CYAML_FLAG_POINTER, struct numbers, data,
-                         &data_entry, 0, CYAML_UNLIMITED),
+    CYAML_FIELD_UINT("uid", CYAML_FLAG_DEFAULT, struct uid_struct, uid),
+    CYAML_FIELD_SEQUENCE_COUNT("directory",
+                               CYAML_FLAG_POINTER | CYAML_FLAG_OPTIONAL,
+                               struct uid_struct, directory, directory_count,
+                               &string_ptr_schema, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END};
 
 /* CYAML value schema for the top level mapping. */
 static const cyaml_schema_value_t top_schema = {
-    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct numbers, top_mapping_schema),
+    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct uid_struct,
+                        top_mapping_schema),
 };
 
 /******************************************************************************
@@ -66,6 +78,7 @@ static const cyaml_config_t config = {
     .mem_fn = cyaml_mem,            /* Use the default memory allocator. */
     .log_level = CYAML_LOG_WARNING, /* Logging errors and warnings only. */
 };
+
 static int libbpf_print_fn(enum libbpf_print_level level, const char *format,
                            va_list args) {
   if (level >= LIBBPF_DEBUG)
@@ -124,7 +137,7 @@ int main(int argc, char *argv[]) {
   struct msg_t msg;
   const char *m = "this not allowed";
   strncpy((char *)&msg.message, m, strlen(m));
-  struct numbers *n;
+  struct uid_struct *n;
   enum {
     ARG_PROG_NAME,
     ARG_PATH_IN,
@@ -146,37 +159,51 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  int this = 1000;
+  bpf_map__update_elem(skel->maps.my_config, &this, sizeof(this), msg.message,
+                       sizeof(msg.message), 0);
+
+  // file to debug
+  FILE *fptr;
+  fptr = fopen("test.txt", "a");
+  unsigned int i = 0;
+  unsigned char aux[100];
   /* Use the data. */
-  for (unsigned i = 0; i < n->data_count; i++) {
-    bpf_map__update_elem(skel->maps.my_config, &n->data[i], sizeof(n->data[i]),
-                         &msg, sizeof(msg), 0);
+  for (i = 0; i < n->directory_count; i++) {
+    strncpy(aux, n->directory[i], sizeof(aux));
+    // aux = (unsigned char *)n->directory[i];
+    bpf_map__update_elem(skel->maps.directories, &aux, sizeof(aux), &n->uid,
+                         sizeof(n->uid), 0);
+    // fprintf(fptr, "\n\n%s", n->directory[i]);
+    // fprintf(fptr, "wtfwtfwtfwtf\n");
   }
 
-  struct pairing x;
-  // unsigned char *str = "/home/test2/this");
-  unsigned char str[100] = "/home/test2/this\0";
-  // bpf_strtol to convert string into long, to facilitate accessing from the
-  // hash map char *str_aux = &str[0];
-  // strcpy(x.path, str);
-  x.uid = 1001;
-
-  // int z = 12345;
-  bpf_map__update_elem(skel->maps.directories, &str, sizeof(str), &x.uid,
-                       sizeof(x.uid), 0);
-
-  struct pairing z;
-  // unsigned char *str = "/home/test2/this");
-  unsigned char str1[100] =
-      "/home/carlosfcpinto/Documents/thesis/ebpf_app/src/testfile2\0";
-  // bpf_strtol to convert string into long, to facilitate accessing from the
-  // hash map char *str_aux = &str[0];
-  // strcpy(x.path, str);
-  z.uid = 1001;
-
-  // int z = 12345;
-  bpf_map__update_elem(skel->maps.directories, &str1, sizeof(str1), &z.uid,
-                       sizeof(z.uid), 0);
-
+  // fprintf(fptr, " %d wtfwtfwtfwtf\n", i);
+  // struct pairing x;
+  // // unsigned char *str = "/home/test2/this");
+  // unsigned char str[100] = "/home/test2/this\0";
+  // // bpf_strtol to convert string into long, to facilitate accessing from the
+  // // hash map char *str_aux = &str[0];
+  // // strcpy(x.path, str);
+  // x.uid = 1001;
+  //
+  // // int z = 12345;
+  // bpf_map__update_elem(skel->maps.directories, &str, sizeof(str), &x.uid,
+  //                      sizeof(x.uid), 0);
+  //
+  // struct pairing z;
+  // // unsigned char *str = "/home/test2/this");
+  // unsigned char str1[100] =
+  //     "/home/carlosfcpinto/Documents/thesis/ebpf_app/src/testfile2\0";
+  // // bpf_strtol to convert string into long, to facilitate accessing from the
+  // // hash map char *str_aux = &str[0];
+  // // strcpy(x.path, str);
+  // z.uid = 1001;
+  //
+  // // int z = 12345;
+  // bpf_map__update_elem(skel->maps.directories, &str1, sizeof(str1), &z.uid,
+  //                      sizeof(z.uid), 0);
+  //
   err = eBPF_ls_bpf__attach(skel);
   if (err) {
     fprintf(stderr, "Failed to attach BPF skeleton: %d\n", err);
@@ -212,5 +239,6 @@ int main(int argc, char *argv[]) {
 
   perf_buffer__free(pb);
   eBPF_ls_bpf__destroy(skel);
+  fclose(fptr);
   return -err;
 }

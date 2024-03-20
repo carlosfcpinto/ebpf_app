@@ -209,7 +209,7 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   }
 
   bpf_printk("what is going on?");
-  return -EPERM;
+  return 0;
 }
 // file_open
 SEC("lsm/file_open")
@@ -263,53 +263,69 @@ int BPF_PROG(file_open, struct file *file) {
   bpf_printk("what is going on?");
   return 0;
 }
-// SEC("lsm/task_fix_setuid")
-// int BPF_PROG(setuid, struct cred *new, struct cred *old, int flags) {
-//
-//   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-//   struct file *file = BPF_CORE_READ(task, mm, exe_file);
-//   struct path *path = __builtin_preserve_access_index(&file->f_path);
-//
-//   struct buffer *string_buf = get_buffer();
-//   if (string_buf == NULL) {
-//     return 0;
-//   }
-//   u_char *file_path = NULL;
-//   get_path_str_from_path(&file_path, path, string_buf);
-//   bpf_printk("sudo access in %s ", file_path);
-//   bpf_printk("flags: %d ", flags);
-//
-//   char comm[16];
-//   bpf_get_current_comm(&comm, sizeof(comm));
-//   bpf_printk("/n/n/n This command %s ", comm);
-//   // char new_string[15];
-//   // bpf_probe_read_str(&new_string, sizeof(new_string), file_path);
-//   // if (/* (new->uid.val == 1000 && old->suid.val == 1006) ||*/
-//   //   (new->uid.val == 1000 && old->euid.val == 0 && old->suid.val !=
-//   1000)/*
-//   //   &&
-//   //     __builtin_memcmp("su\0", comm, 2 * sizeof(char)) == 0 */)
-//   if (new->uid.val == 1000 && old->euid.val == 0 && old->uid.val != 1000)
-//     return -EPERM;
-//   return 0;
-// }
 
-// SEC("ksyscall/execve")
-// int BPF_PROG(exec, const char *pathname, char *const _Nullable argv[],
-//              char *const _Nullable envp[]) {
-//   char comm[16];
-//
-//   struct data_t data = {};
-//   u64 uid;
-//
-//   data.pid = bpf_get_current_pid_tgid() >> 32;
-//   uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-//   data.uid = uid;
-//   bpf_get_current_comm(&comm, sizeof(comm));
-//   if (__builtin_memcmp(comm, "su", 2) == 0 && uid == 0) {
-//     // Deny the execution of "su" command
-//     bpf_printk("sudo access detected in probe ");
-//     return -EPERM; // This will cause the "su" command to fail
-//   }
-//   return 0;
-// }
+SEC("lsm/path_rename")
+int BPF_PROG(path_rename, const struct path *old_dir, struct dentry *old_dentry,
+             const struct path *new_dir, struct dentry *new_dentry) {
+  struct msg_t *p;
+  u32 *directory_flag;
+  struct pairing x;
+  int uid;
+
+  // data.pid = bpf_get_current_pid_tgid() >> 32;
+  uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
+  bpf_printk("this user in the first check %d ", uid);
+
+  /* bpf_get_current_comm(&data.command, sizeof(data.command)); */
+  /* bpf_probe_read_user_str(&data.path, sizeof(data.path), path->dentry); */
+  struct buffer *string_buf = get_buffer();
+  if (string_buf == NULL) {
+    bpf_printk("string_buf is null");
+    return 0;
+  }
+  // struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+  // struct file *file = BPF_CORE_READ(task, mm, exe_file);
+  // struct path *path_aux = __builtin_preserve_access_index(&file->f_path);
+  u8 *file_path;
+  get_path_str_from_path(&file_path, old_dir, string_buf);
+
+  // bpf_core_read(&y, sizeof(y), file_path);
+  // int len = bpf_core_read_str(dir, sizeof(dir) * 100, file_path);
+  // long len = bpf_core_read_str(x.path, PATH_MAX, file_path);
+  x.uid = uid;
+  // if (len < 0) {
+  //   bpf_printk("unable to copy string");
+  //   return 0;
+  // }
+
+  bpf_core_read(x.path, sizeof(x.path), file_path);
+  bpf_printk("x.uid? %d", x.uid);
+  bpf_printk("buffer? %s", string_buf->data);
+  bpf_printk("x.path? \"%s\"", x.path);
+  bpf_printk("size of dir: %d ", sizeof(file_path));
+
+  p = bpf_map_lookup_elem(&my_config, &x.uid);
+  directory_flag = bpf_map_lookup_elem(&directories, &x.path);
+  if (p != 0) {
+    bpf_printk("This user %d", uid);
+    bpf_printk("Chmod allowed to %s", file_path);
+    return 0;
+  } else {
+    if (directory_flag != 0) {
+      if (*directory_flag == uid) {
+        bpf_printk("user %d has access to file", *directory_flag);
+        return 0;
+      }
+      bpf_printk("Aux not empty %d\n ", uid);
+      bpf_printk("Chmod allowed to %s", file_path);
+      return 0;
+    } else {
+      bpf_printk("aux is empty");
+      bpf_printk("Chmod not allowed to %s %d", file_path, uid);
+      return -EPERM;
+    }
+  }
+
+  bpf_printk("what is going on?");
+  return -EPERM;
+}
