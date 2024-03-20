@@ -7,7 +7,7 @@
 #include <bpf/bpf_tracing.h>
 #include <linux/limits.h>
 
-char message[12] = "Hello World ";
+char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
 #define EFAULT 14 /* Bad address */
 
@@ -211,7 +211,58 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   bpf_printk("what is going on?");
   return -EPERM;
 }
-char LICENSE[] SEC("license") = "Dual BSD/GPL";
+// file_open
+SEC("lsm/file_open")
+int BPF_PROG(file_open, struct file *file) {
+  struct msg_t *p;
+  u32 *directory_flag;
+  struct pairing x;
+  int uid;
+
+  uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
+
+  struct buffer *string_buf = get_buffer();
+  if (string_buf == NULL) {
+    bpf_printk("string_buf is null");
+    return 0;
+  }
+
+  u8 *file_path;
+  get_path_str_from_path(&file_path, &file->f_path, string_buf);
+
+  x.uid = uid;
+
+  bpf_core_read(x.path, sizeof(x.path), file_path);
+  bpf_printk("x.uid? %d", x.uid);
+  bpf_printk("buffer? %s", string_buf->data);
+  bpf_printk("x.path? \"%s\"", x.path);
+  bpf_printk("size of dir: %d ", sizeof(file_path));
+
+  p = bpf_map_lookup_elem(&my_config, &x.uid);
+  directory_flag = bpf_map_lookup_elem(&directories, &x.path);
+  if (p != 0) {
+    /* bpf_printk("This user %d", uid);
+    bpf_printk("File_open allowed to %s", file_path); */
+    return 0;
+  } else {
+    if (directory_flag != 0) {
+      if (*directory_flag == uid) {
+        bpf_printk("user %d does not have access to file", uid);
+        return -EPERM;
+      }
+      bpf_printk("Aux not empty %d -> %d\n ", uid, *directory_flag);
+      bpf_printk("File_open allowed to %s %d", file_path, uid);
+      return 0;
+    } else {
+      bpf_printk("aux is empty");
+      bpf_printk("file_open allowed to %s %d", file_path, uid);
+      return 0;
+    }
+  }
+
+  bpf_printk("what is going on?");
+  return 0;
+}
 // SEC("lsm/task_fix_setuid")
 // int BPF_PROG(setuid, struct cred *new, struct cred *old, int flags) {
 //
