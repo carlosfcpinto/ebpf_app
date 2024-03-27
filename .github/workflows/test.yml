@@ -41,7 +41,7 @@ jobs:
      - name: Background Server
        uses: BerniWittmann/background-server-action@v1.1.1
        with:
-         command: bats src/test.sh
+         command: sudo bats src/test.sh
          start: sudo ./src/eBPF_ls src/config.yaml
          build: make build
 #     - name: Build
