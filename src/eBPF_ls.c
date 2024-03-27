@@ -168,42 +168,14 @@ int main(int argc, char *argv[]) {
   fptr = fopen("test.txt", "a");
   unsigned int i = 0;
   unsigned char aux[100];
+
   /* Use the data. */
   for (i = 0; i < n->directory_count; i++) {
     strncpy(aux, n->directory[i], sizeof(aux));
-    // aux = (unsigned char *)n->directory[i];
     bpf_map__update_elem(skel->maps.directories, &aux, sizeof(aux), &n->uid,
                          sizeof(n->uid), 0);
-    // fprintf(fptr, "\n\n%s", n->directory[i]);
-    // fprintf(fptr, "wtfwtfwtfwtf\n");
   }
 
-  // fprintf(fptr, " %d wtfwtfwtfwtf\n", i);
-  // struct pairing x;
-  // // unsigned char *str = "/home/test2/this");
-  // unsigned char str[100] = "/home/test2/this\0";
-  // // bpf_strtol to convert string into long, to facilitate accessing from the
-  // // hash map char *str_aux = &str[0];
-  // // strcpy(x.path, str);
-  // x.uid = 1001;
-  //
-  // // int z = 12345;
-  // bpf_map__update_elem(skel->maps.directories, &str, sizeof(str), &x.uid,
-  //                      sizeof(x.uid), 0);
-  //
-  // struct pairing z;
-  // // unsigned char *str = "/home/test2/this");
-  // unsigned char str1[100] =
-  //     "/home/carlosfcpinto/Documents/thesis/ebpf_app/src/testfile2\0";
-  // // bpf_strtol to convert string into long, to facilitate accessing from the
-  // // hash map char *str_aux = &str[0];
-  // // strcpy(x.path, str);
-  // z.uid = 1001;
-  //
-  // // int z = 12345;
-  // bpf_map__update_elem(skel->maps.directories, &str1, sizeof(str1), &z.uid,
-  //                      sizeof(z.uid), 0);
-  //
   err = eBPF_ls_bpf__attach(skel);
   if (err) {
     fprintf(stderr, "Failed to attach BPF skeleton: %d\n", err);

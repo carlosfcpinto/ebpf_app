@@ -1,5 +1,40 @@
 #!/usr/bin/env bats
 
+create_user () {
+    username=$1
+    # Code block or Compound Commands
+    if id "$username" &>/dev/null; then
+        echo "User $username already exists."
+        return 0
+    fi
+    useradd -m -s /bin/bash "$username"
+    passwd -d "$username"
+}
+
+give_permission (){
+    flag=$1
+    username=$2
+    if [ "$flag" = "yes" ]; then
+        echo "uid: $(id -u $username)
+directory:
+    - $(pwd)/testfile2" > config.yaml
+    fi
+}
+
+@test "Random" {
+    create_user "test"
+    give_permission "yes" "test"
+
+    touch testfile2
+
+    chown $(id -u test) testfile2
+
+    run su -c "chmod 777 testfile2" -s /bin/bash test
+
+    rm testfile2
+
+    [ "$status" -eq 0 ]
+}
 
 @test "eBPF block" {
     touch testfile

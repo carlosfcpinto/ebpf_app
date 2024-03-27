@@ -9,6 +9,14 @@ UPDATE: Reading values correctly, assuming the max path provided is of size 100.
 
 Allow or deny the chmod system call, based on both the user and the directory where is being ran. We must assure that if a user is whitelisted then he will always be able to make the call. A directory can map a specific user that is not white listed to be able to make the chmod call inside it.
 
+Need 2 extra hookpoints to not allow calls to chown to certain files and to prevent users from using sudo su to a user with priviliges that can access them.
+
+Map sudo calls to users who made it to prevent sudo su calls.
+
+Prevent kill calls.
+
+Freeze maps that store directories & users.
+
 # Testing
 
 The test.sh file is simplistic yet enough to show that the eBPF program is running. One test only, need to assemble a battery of them as to ensure that the application runs as expected.

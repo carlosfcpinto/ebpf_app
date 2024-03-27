@@ -211,6 +211,7 @@ int BPF_PROG(path_chmod, const struct path *path, umode_t mode) {
   bpf_printk("what is going on?");
   return 0;
 }
+
 // file_open
 SEC("lsm/file_open")
 int BPF_PROG(file_open, struct file *file) {
