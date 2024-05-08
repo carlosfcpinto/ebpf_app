@@ -4,6 +4,8 @@ Trouble passing strings from kernel to user space, maybe hash map should be of t
 
 Can I map users to directories instead of directories to users? Seems like eBPF maps don't handle strings correctly, not being able to match on it in the expected manner.
 UPDATE: Reading values correctly, assuming the max path provided is of size 100.
+We should track access to sudo calls using an eBPF map to prevent a call to sudo su from a user that has sudo access. This can be done by using a flag to monitor if the user made a privileged call as to allow a change from sudo to user.
+This should probably be done by commenting the line from /etc/pam.d/su that says "auth sufficient pam_rootok.so"
 
 # Requirements
 

@@ -159,9 +159,10 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  int this = 1000;
-  bpf_map__update_elem(skel->maps.my_config, &this, sizeof(this), msg.message,
-                       sizeof(msg.message), 0);
+  // int this = 1000;
+  // bpf_map__update_elem(skel->maps.my_config, &this, sizeof(this),
+  // msg.message,
+  //                      sizeof(msg.message), 0);
 
   // file to debug
   FILE *fptr;
