@@ -23,21 +23,21 @@ jobs:
          
      - name: Checkout
        uses: actions/checkout@v2
-     - name: Setup Bats and bats libs
-       run: |
-         git clone https://github.com/bats-core/bats-core.git &&
-         cd bats-core &&
-         sudo ./install.sh /usr/local &&
-         cd ..
-     - name: sanity
-       run: echo $(id --user)
-     - name: Dependencies
-       run: |
-        sudo apt-get install -y --no-install-recommends \
-        libelf1 libelf-dev zlib1g-dev libclang-13-dev \
-        make git clang llvm pkg-config build-essential libyaml-dev lsb
-     - name: install libcyaml
-       run: git clone https://github.com/tlsa/libcyaml.git && cd libcyaml && sudo make install && LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig
+     # - name: Setup Bats and bats libs
+     #   run: |
+     #     git clone https://github.com/bats-core/bats-core.git &&
+     #     cd bats-core &&
+     #     sudo ./install.sh /usr/local &&
+     #     cd ..
+     # - name: sanity
+     #   run: echo $(id --user)
+     # - name: Dependencies
+     #   run: |
+     #    sudo apt-get install -y --no-install-recommends \
+     #    libelf1 libelf-dev zlib1g-dev libclang-13-dev \
+     #    make git clang llvm pkg-config build-essential libyaml-dev lsb
+     # - name: install libcyaml
+     #   run: git clone https://github.com/tlsa/libcyaml.git && cd libcyaml && sudo make install && LD_LIBRARY_PATH=/usr/local/lib && export LD_LIBRARY_PATH && sudo ldconfig
      - name: Background Server
        uses: BerniWittmann/background-server-action@v1.1.1
        with:
