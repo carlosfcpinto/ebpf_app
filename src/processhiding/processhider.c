@@ -11,9 +11,6 @@
  */
 static const char *process_to_filter = "eBPF_ls";
 
-/*
- * Get a directory name given a DIR* handle
- */
 static int get_dir_name(DIR *dirp, char *buf, size_t size) {
   int fd = dirfd(dirp);
   if (fd == -1) {
@@ -31,9 +28,6 @@ static int get_dir_name(DIR *dirp, char *buf, size_t size) {
   return 1;
 }
 
-/*
- * Get a process name given its pid
- */
 static int get_process_name(char *pid, char *buf) {
   if (strspn(pid, "0123456789") != strlen(pid)) {
     return 0;

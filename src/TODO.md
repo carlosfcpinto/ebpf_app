@@ -28,3 +28,8 @@ We can use bats-core to do this, which is being ran right now. We will need the 
 Pass everything to github action, to test in the environment.
 
 Property based testing, generate a smaller universe to test and generate tests to.
+
+
+# Report
+
+Start writing down the progress so far and the limitations of the solution found.
